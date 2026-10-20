@@ -48,14 +48,21 @@
   .slider-group { }
   .slider-group label {
     display: flex;
+    align-items: baseline;
     justify-content: space-between;
+    gap: 8px;
     font-weight: 600;
     margin-bottom: 6px;
+    white-space: nowrap;
+  }
+  .slider-group label .name {
+    flex: 0 1 auto;
   }
   .value-display {
-    font-size: 1.3em;
+    font-size: 1.25em;
     font-weight: bold;
     color: #2980b9;
+    flex-shrink: 0;
   }
   input[type=range] {
     width: 100%;
@@ -183,17 +190,17 @@
 
     <div class="controls">
       <div class="slider-group">
-        <label>pH <span class="value-display" id="phValue">7.40</span></label>
+        <label><span class="name">pH</span> <span class="value-display" id="phValue">7.40</span></label>
         <input type="range" id="phSlider" min="6.80" max="7.80" step="0.01" value="7.40">
         <div class="ph-bar"><div class="ph-indicator" id="phIndicator"></div></div>
       </div>
       <div class="slider-group">
-        <label>HCO<sub>3</sub><sup>-</sup> (mmol/L) <span class="value-display" id="hco3Value">24.0</span></label>
+        <label><span class="name">HCO<sub>3</sub><sup>-</sup> <small>(mmol/L)</small></span> <span class="value-display" id="hco3Value">24.0</span></label>
         <input type="range" id="hco3Slider" min="5" max="50" step="0.1" value="24">
         <div class="tco2-box" id="tco2Box">추정 tCO₂ 25.2 mmol/L<br>(HCO₃ 24.0 + 용존 CO₂ 1.2)</div>
       </div>
       <div class="slider-group">
-        <label>pCO<sub>2</sub> (mmHg) <span class="value-display" id="pco2Value">40.0</span></label>
+        <label><span class="name">pCO<sub>2</sub> <small>(mmHg)</small></span> <span class="value-display" id="pco2Value">40.0</span></label>
         <input type="range" id="pco2Slider" min="10" max="100" step="0.5" value="40">
       </div>
     </div>
