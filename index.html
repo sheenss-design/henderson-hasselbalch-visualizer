@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Henderson-Hasselbalch 방정식 시각화</title>
+<style>
+  :root {
+    --acid: #e74c3c;
+    --normal: #27ae60;
+    --alkali: #3498db;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #2c3e50;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+  .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  .equation {
+    font-size: 1.4em;
+    text-align: center;
+    background: #ecf0f1;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: 'Times New Roman', serif;
+    margin: 10px 0 20px;
+  }
+  .controls { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 700px) {
+    .controls { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  .slider-group { }
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .value-display {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #2980b9;
+  }
+  input[type=range] {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #ddd;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #3498db;
+    cursor: pointer;
+  }
+  input[type=range]:disabled {
+    opacity: 0.5;
+  }
+  input[type=range]:disabled::-webkit-slider-thumb {
+    background: #95a5a6;
+    cursor: not-allowed;
+  }
+  .mode-select {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .mode-select label {
+    background: #ecf0f1;
+    padding: 10px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-select input { display: none; }
+  .mode-select input:checked + span {
+    background: #3498db;
+    color: white;
+  }
+  .mode-select label:has(input:checked) {
+    background: #3498db;
+    color: white;
+  }
+  .status {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 15px 0;
+  }
+  .status.normal { background: #d5f5e3; color: #1e8449; }
+  .status.acidosis { background: #fadbd8; color: #922b21; }
+  .status.alkalosis { background: #d6eaf8; color: #1a5276; }
+  .ratio-box {
+    text-align: center;
+    font-size: 1.1em;
+    margin: 10px 0;
+  }
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 15px;
+  }
+  .presets button {
+    background: #34495e;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+  }
+  .presets button:hover { background: #2c3e50; }
+  .info { font-size: 0.9em; color: #7f8c8d; margin-top: 15px; }
+  .ph-bar {
+    height: 30px;
+    border-radius: 15px;
+    background: linear-gradient(to right, #e74c3c 0%, #f39c12 30%, #27ae60 50%, #3498db 70%, #8e44ad 100%);
+    position: relative;
+    margin: 10px 0;
+  }
+  .ph-indicator {
+    position: absolute;
+    top: -5px;
+    width: 4px;
+    height: 40px;
+    background: #2c3e50;
+    border-radius: 2px;
+    transform: translateX(-50%);
+  }
+  footer { text-align: center; color: #95a5a6; margin-top: 40px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Henderson-Hasselbalch 방정식 시각화</h1>
+  <p class="subtitle">pH, HCO<sub>3</sub><sup>-</sup>, pCO<sub>2</sub> 슬라이더로 연동 변화를 확인하세요</p>
+
+  <div class="card">
+    <div class="equation">
+      pH = 6.1 + log<sub>10</sub>( [HCO<sub>3</sub><sup>-</sup>] / (0.03 × pCO<sub>2</sub>) )
+    </div>
+
+    <div class="mode-select">
+      <label><input type="radio" name="mode" value="ph" checked><span>pH 계산</span></label>
+      <label><input type="radio" name="mode" value="hco3"><span>HCO<sub>3</sub> 계산</span></label>
+      <label><input type="radio" name="mode" value="pco2"><span>pCO<sub>2</sub> 계산</span></label>
+    </div>
+
+    <div class="controls">
+      <div class="slider-group">
+        <label>pH <span class="value-display" id="phValue">7.40</span></label>
+        <input type="range" id="phSlider" min="6.80" max="7.80" step="0.01" value="7.40">
+        <div class="ph-bar"><div class="ph-indicator" id="phIndicator"></div></div>
+      </div>
+      <div class="slider-group">
+        <label>HCO<sub>3</sub><sup>-</sup> (mmol/L) <span class="value-display" id="hco3Value">24.0</span></label>
+        <input type="range" id="hco3Slider" min="5" max="50" step="0.1" value="24">
+      </div>
+      <div class="slider-group">
+        <label>pCO<sub>2</sub> (mmHg) <span class="value-display" id="pco2Value">40.0</span></label>
+        <input type="range" id="pco2Slider" min="10" max="100" step="0.5" value="40">
+      </div>
+    </div>
+
+    <div class="status normal" id="status">정상 (Normal)</div>
+    <div class="ratio-box">
+      HCO<sub>3</sub> : 용존 CO<sub>2</sub> 비율 = <strong id="ratio">20.0 : 1</strong>
+      (정상 ≈ 20:1)
+    </div>
+
+    <div class="presets">
+      <button data-preset="normal">정상</button>
+      <button data-preset="met-acid">대사성 산증</button>
+      <button data-preset="met-alk">대사성 알칼리증</button>
+      <button data-preset="resp-acid">호흡성 산증</button>
+      <button data-preset="resp-alk">호흡성 알칼리증</button>
+    </div>
+
+    <div class="info">
+      정상 범위: pH 7.35–7.45 · HCO<sub>3</sub> 22–26 mmol/L · pCO<sub>2</sub> 35–45 mmHg<br>
+      모드를 선택하면 해당 변수가 자동 계산되고, 나머지 두 슬라이더를 움직여 변화를 관찰하세요.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>사용 방법</h3>
+    <ul>
+      <li><strong>pH 계산</strong> 모드: HCO<sub>3</sub>와 pCO<sub>2</sub>를 조절하면 pH가 자동으로 변합니다.</li>
+      <li><strong>HCO<sub>3</sub> 계산</strong> 모드: pH와 pCO<sub>2</sub>를 조절하면 HCO<sub>3</sub>가 자동으로 변합니다.</li>
+      <li><strong>pCO<sub>2</sub> 계산</strong> 모드: pH와 HCO<sub>3</sub>를 조절하면 pCO<sub>2</sub>가 자동으로 변합니다.</li>
+      <li>프리셋을 눌러 전형적인 산-염기 장애 상태를 빠르게 확인해 보세요.</li>
+    </ul>
+    <p>이 도구는 교육 목적으로만 사용하세요. 실제 환자 진단에 사용하지 마세요.</p>
+  </div>
+</div>
+
+<footer>
+  Henderson-Hasselbalch Equation Interactive Visualizer · pKa = 6.1 · 용해도 계수 = 0.03
+</footer>
+
+<script>
+const pKa = 6.1;
+const solubility = 0.03;
+
+const phSlider = document.getElementById('phSlider');
+const hco3Slider = document.getElementById('hco3Slider');
+const pco2Slider = document.getElementById('pco2Slider');
+const phValue = document.getElementById('phValue');
+const hco3Value = document.getElementById('hco3Value');
+const pco2Value = document.getElementById('pco2Value');
+const statusEl = document.getElementById('status');
+const ratioEl = document.getElementById('ratio');
+const phIndicator = document.getElementById('phIndicator');
+const modeRadios = document.querySelectorAll('input[name="mode"]');
+
+let currentMode = 'ph';
+
+function getMode() {
+  return document.querySelector('input[name="mode"]:checked').value;
+}
+
+function updateFromInputs() {
+  currentMode = getMode();
+  let ph = parseFloat(phSlider.value);
+  let hco3 = parseFloat(hco3Slider.value);
+  let pco2 = parseFloat(pco2Slider.value);
+
+  if (currentMode === 'ph') {
+    if (hco3 > 0 && pco2 > 0) {
+      ph = pKa + Math.log10(hco3 / (solubility * pco2));
+      ph = Math.max(6.8, Math.min(7.8, ph));
+      phSlider.value = ph.toFixed(2);
+    }
+  } else if (currentMode === 'hco3') {
+    if (pco2 > 0) {
+      hco3 = solubility * pco2 * Math.pow(10, ph - pKa);
+      hco3 = Math.max(5, Math.min(50, hco3));
+      hco3Slider.value = hco3.toFixed(1);
+    }
+  } else if (currentMode === 'pco2') {
+    if (hco3 > 0) {
+      const denom = solubility * Math.pow(10, ph - pKa);
+      if (denom > 0) {
+        pco2 = hco3 / denom;
+        pco2 = Math.max(10, Math.min(100, pco2));
+        pco2Slider.value = pco2.toFixed(1);
+      }
+    }
+  }
+
+  // Update displays
+  phValue.textContent = parseFloat(phSlider.value).toFixed(2);
+  hco3Value.textContent = parseFloat(hco3Slider.value).toFixed(1);
+  pco2Value.textContent = parseFloat(pco2Slider.value).toFixed(1);
+
+  // Ratio
+  const dissolved = solubility * parseFloat(pco2Slider.value);
+  const ratio = parseFloat(hco3Slider.value) / dissolved;
+  ratioEl.textContent = ratio.toFixed(1) + ' : 1';
+
+  // pH indicator position (6.8 to 7.8 mapped to 0-100%)
+  const phPos = ((parseFloat(phSlider.value) - 6.8) / 1.0) * 100;
+  phIndicator.style.left = Math.max(0, Math.min(100, phPos)) + '%';
+
+  // Status
+  updateStatus(parseFloat(phSlider.value), parseFloat(hco3Slider.value), parseFloat(pco2Slider.value));
+
+  // Enable/disable sliders based on mode
+  phSlider.disabled = (currentMode === 'ph');
+  hco3Slider.disabled = (currentMode === 'hco3');
+  pco2Slider.disabled = (currentMode === 'pco2');
+}
+
+function updateStatus(ph, hco3, pco2) {
+  let text = '';
+  let cls = 'normal';
+
+  if (ph < 7.35) {
+    cls = 'acidosis';
+    text = '산증 (Acidosis)';
+    if (pco2 > 45 && hco3 >= 22) text += ' · 호흡성';
+    else if (hco3 < 22 && pco2 <= 45) text += ' · 대사성';
+    else text += ' · 혼합 가능성';
+  } else if (ph > 7.45) {
+    cls = 'alkalosis';
+    text = '알칼리증 (Alkalosis)';
+    if (pco2 < 35 && hco3 <= 26) text += ' · 호흡성';
+    else if (hco3 > 26 && pco2 >= 35) text += ' · 대사성';
+    else text += ' · 혼합 가능성';
+  } else {
+    text = '정상 범위 (Normal)';
+  }
+
+  statusEl.textContent = text;
+  statusEl.className = 'status ' + cls;
+}
+
+// Event listeners
+[phSlider, hco3Slider, pco2Slider].forEach(slider => {
+  slider.addEventListener('input', updateFromInputs);
+});
+
+modeRadios.forEach(radio => {
+  radio.addEventListener('change', updateFromInputs);
+});
+
+// Presets
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const preset = btn.dataset.preset;
+    if (preset === 'normal') {
+      hco3Slider.value = 24;
+      pco2Slider.value = 40;
+    } else if (preset === 'met-acid') {
+      hco3Slider.value = 12;
+      pco2Slider.value = 30; // compensated
+    } else if (preset === 'met-alk') {
+      hco3Slider.value = 36;
+      pco2Slider.value = 50;
+    } else if (preset === 'resp-acid') {
+      hco3Slider.value = 28;
+      pco2Slider.value = 60;
+    } else if (preset === 'resp-alk') {
+      hco3Slider.value = 20;
+      pco2Slider.value = 25;
+    }
+    // Force mode to ph for presets so values make sense
+    document.querySelector('input[value="ph"]').checked = true;
+    updateFromInputs();
+  });
+});
+
+// Initial update
+updateFromInputs();
+</script>
+</body>
+</html>
