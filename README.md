@@ -11,6 +11,16 @@ pH, HCO₃⁻, pCO₂ 세 변수가 Henderson-Hasselbalch 방정식으로 어떻
 - pKa = 6.1
 - 용해도 계수 = 0.03 (mmol/L per mmHg)
 
+## 추정 tCO₂
+
+혈액화학 검사의 total CO₂(tCO₂)에 가까운 근사값으로 다음을 사용합니다.
+
+\[
+\mathrm{tCO_2} \approx [\mathrm{HCO}_3^-] + 0.03 \times p\mathrm{CO}_2
+\]
+
+도구 화면의 HCO₃ 칸 아래에 실시간으로 표시됩니다.
+
 ## 사용 방법
 
 1. 저장소를 클론하거나 GitHub에서 `index.html`을 열어보세요.
@@ -22,6 +32,7 @@ pH, HCO₃⁻, pCO₂ 세 변수가 Henderson-Hasselbalch 방정식으로 어떻
 
 - 세 가지 계산 모드: pH / HCO₃ / pCO₂ 중 하나를 자동 계산
 - 실시간 슬라이더 연동
+- 추정 tCO₂ 표시 (HCO₃ + 용존 CO₂)
 - 산-염기 상태 표시 (정상/산증/알칼리증)
 - HCO₃ : 용존 CO₂ 비율 표시
 - 전형적인 산-염기 장애 프리셋
@@ -43,5 +54,3 @@ pH, HCO₃⁻, pCO₂ 세 변수가 Henderson-Hasselbalch 방정식으로 어떻
 open index.html   # macOS
 # 또는 브라우저에서 파일 직접 열기
 ```
-
-<!-- trigger rebuild -->

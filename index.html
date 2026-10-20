@@ -119,6 +119,15 @@
     font-size: 1.1em;
     margin: 10px 0;
   }
+  .tco2-box {
+    text-align: center;
+    font-size: 0.95em;
+    color: #34495e;
+    background: #f4f6f7;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 6px;
+  }
   .presets {
     display: flex;
     flex-wrap: wrap;
@@ -181,6 +190,7 @@
       <div class="slider-group">
         <label>HCO<sub>3</sub><sup>-</sup> (mmol/L) <span class="value-display" id="hco3Value">24.0</span></label>
         <input type="range" id="hco3Slider" min="5" max="50" step="0.1" value="24">
+        <div class="tco2-box" id="tco2Box">추정 tCO₂ 25.2 mmol/L<br>(HCO₃ 24.0 + 용존 CO₂ 1.2)</div>
       </div>
       <div class="slider-group">
         <label>pCO<sub>2</sub> (mmHg) <span class="value-display" id="pco2Value">40.0</span></label>
@@ -204,6 +214,7 @@
 
     <div class="info">
       정상 범위: pH 7.35–7.45 · HCO<sub>3</sub> 22–26 mmol/L · pCO<sub>2</sub> 35–45 mmHg<br>
+      추정 tCO₂ ≈ HCO₃ + 0.03 × pCO₂ (혈액화학 검사의 total CO₂에 가까운 근사값)<br>
       모드를 선택하면 해당 변수가 자동 계산되고, 나머지 두 슬라이더를 움직여 변화를 관찰하세요.
     </div>
   </div>
@@ -236,6 +247,7 @@ const hco3Value = document.getElementById('hco3Value');
 const pco2Value = document.getElementById('pco2Value');
 const statusEl = document.getElementById('status');
 const ratioEl = document.getElementById('ratio');
+const tco2Box = document.getElementById('tco2Box');
 const phIndicator = document.getElementById('phIndicator');
 const modeRadios = document.querySelectorAll('input[name="mode"]');
 
@@ -275,21 +287,28 @@ function updateFromInputs() {
   }
 
   // Update displays
-  phValue.textContent = parseFloat(phSlider.value).toFixed(2);
-  hco3Value.textContent = parseFloat(hco3Slider.value).toFixed(1);
-  pco2Value.textContent = parseFloat(pco2Slider.value).toFixed(1);
+  const phNum = parseFloat(phSlider.value);
+  const hco3Num = parseFloat(hco3Slider.value);
+  const pco2Num = parseFloat(pco2Slider.value);
 
-  // Ratio
-  const dissolved = solubility * parseFloat(pco2Slider.value);
-  const ratio = parseFloat(hco3Slider.value) / dissolved;
+  phValue.textContent = phNum.toFixed(2);
+  hco3Value.textContent = hco3Num.toFixed(1);
+  pco2Value.textContent = pco2Num.toFixed(1);
+
+  // Ratio & tCO2
+  const dissolved = solubility * pco2Num;
+  const ratio = hco3Num / dissolved;
+  const tco2 = hco3Num + dissolved;
+
   ratioEl.textContent = ratio.toFixed(1) + ' : 1';
+  tco2Box.innerHTML = `추정 tCO₂ ${tco2.toFixed(1)} mmol/L<br>(HCO₃ ${hco3Num.toFixed(1)} + 용존 CO₂ ${dissolved.toFixed(1)})`;
 
   // pH indicator position (6.8 to 7.8 mapped to 0-100%)
-  const phPos = ((parseFloat(phSlider.value) - 6.8) / 1.0) * 100;
+  const phPos = ((phNum - 6.8) / 1.0) * 100;
   phIndicator.style.left = Math.max(0, Math.min(100, phPos)) + '%';
 
   // Status
-  updateStatus(parseFloat(phSlider.value), parseFloat(hco3Slider.value), parseFloat(pco2Slider.value));
+  updateStatus(phNum, hco3Num, pco2Num);
 
   // Enable/disable sliders based on mode
   phSlider.disabled = (currentMode === 'ph');
@@ -339,7 +358,7 @@ document.querySelectorAll('.presets button').forEach(btn => {
       pco2Slider.value = 40;
     } else if (preset === 'met-acid') {
       hco3Slider.value = 12;
-      pco2Slider.value = 30; // compensated
+      pco2Slider.value = 30;
     } else if (preset === 'met-alk') {
       hco3Slider.value = 36;
       pco2Slider.value = 50;
@@ -350,7 +369,6 @@ document.querySelectorAll('.presets button').forEach(btn => {
       hco3Slider.value = 20;
       pco2Slider.value = 25;
     }
-    // Force mode to ph for presets so values make sense
     document.querySelector('input[value="ph"]').checked = true;
     updateFromInputs();
   });
