@@ -43,3 +43,5 @@ pH, HCO₃⁻, pCO₂ 세 변수가 Henderson-Hasselbalch 방정식으로 어떻
 open index.html   # macOS
 # 또는 브라우저에서 파일 직접 열기
 ```
+
+<!-- trigger rebuild -->
