@@ -179,7 +179,7 @@
 
   <div class="card">
     <div class="equation">
-      pH = 6.1 + log<sub>10</sub>( [HCO<sub>3</sub><sup>-</sup>] / (0.03 × pCO<sub>2</sub>) )
+      pH = 6.1 + log<sub>10</sub>( [HCO<sub>3</sub><sup>-</sup>] / (0.0307 × pCO<sub>2</sub>) )
     </div>
 
     <div class="mode-select">
@@ -221,7 +221,7 @@
 
     <div class="info">
       정상 범위: pH 7.35–7.45 · HCO<sub>3</sub> 22–26 mmol/L · pCO<sub>2</sub> 35–45 mmHg<br>
-      추정 tCO₂ ≈ HCO₃ + 0.03 × pCO₂ (혈액화학 검사의 total CO₂에 가까운 근사값)<br>
+      추정 tCO₂ ≈ HCO₃ + 0.0307 × pCO₂ (혈액화학 검사의 total CO₂에 가까운 근사값)<br>
       모드를 선택하면 해당 변수가 자동 계산되고, 나머지 두 슬라이더를 움직여 변화를 관찰하세요.
     </div>
   </div>
@@ -239,12 +239,12 @@
 </div>
 
 <footer>
-  Henderson-Hasselbalch Equation Interactive Visualizer · pKa = 6.1 · 용해도 계수 = 0.03
+  Henderson-Hasselbalch Equation Interactive Visualizer · pKa = 6.1 · 용해도 계수 = 0.0307
 </footer>
 
 <script>
 const pKa = 6.1;
-const solubility = 0.03;
+const solubility = 0.0307;
 
 const phSlider = document.getElementById('phSlider');
 const hco3Slider = document.getElementById('hco3Slider');

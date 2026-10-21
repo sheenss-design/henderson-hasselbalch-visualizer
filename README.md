@@ -5,18 +5,18 @@ pH, HCO₃⁻, pCO₂ 세 변수가 Henderson-Hasselbalch 방정식으로 어떻
 ## 방정식
 
 \[
-\mathrm{pH} = 6.1 + \log_{10}\left( \frac{[\mathrm{HCO}_3^-]}{0.03 \times p\mathrm{CO}_2} \right)
+\mathrm{pH} = 6.1 + \log_{10}\left( \frac{[\mathrm{HCO}_3^-]}{0.0307 \times p\mathrm{CO}_2} \right)
 \]
 
 - pKa = 6.1
-- 용해도 계수 = 0.03 (mmol/L per mmHg)
+- 용해도 계수 = 0.0307 (mmol/L per mmHg)
 
 ## 추정 tCO₂
 
 혈액화학 검사의 total CO₂(tCO₂)에 가까운 근사값으로 다음을 사용합니다.
 
 \[
-\mathrm{tCO_2} \approx [\mathrm{HCO}_3^-] + 0.03 \times p\mathrm{CO}_2
+\mathrm{tCO_2} \approx [\mathrm{HCO}_3^-] + 0.0307 \times p\mathrm{CO}_2
 \]
 
 도구 화면의 HCO₃ 칸 아래에 실시간으로 표시됩니다.
