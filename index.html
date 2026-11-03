@@ -1,1 +1,564 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Henderson-Hasselbalch + Anion Gap 시각화</title>
+<style>
+  :root {
+    --acid: #e74c3c;
+    --normal: #27ae60;
+    --alkali: #3498db;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #2c3e50;
+    --uc: #5dade2;
+    --ua: #e67e22;
+    --na: #d5dbdb;
+    --cl: #aed6f1;
+    --hco3: #a9dfbf;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+  }
+  .container { max-width: 980px; margin: 0 auto; }
+  h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+  .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 25px; }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  .equation {
+    font-size: 1.3em;
+    text-align: center;
+    background: #ecf0f1;
+    padding: 14px;
+    border-radius: 8px;
+    font-family: 'Times New Roman', serif;
+    margin: 8px 0 16px;
+  }
+  .controls { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  @media (min-width: 700px) {
+    .controls { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  .slider-group label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    white-space: nowrap;
+  }
+  .value-display {
+    font-size: 1.25em;
+    font-weight: bold;
+    color: #2980b9;
+  }
+  input[type=range] {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #ddd;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #3498db;
+    cursor: pointer;
+  }
+  .mode-select {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .mode-select label {
+    background: #ecf0f1;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  .mode-select input { display: none; }
+  .mode-select label:has(input:checked) {
+    background: #3498db;
+    color: white;
+  }
+  .status {
+    text-align: center;
+    font-size: 1.4em;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+  .status.normal { background: #d5f5e3; color: #1e8449; }
+  .status.acidosis { background: #fadbd8; color: #922b21; }
+  .status.alkalosis { background: #d6eaf8; color: #1a5276; }
+  .presets, .ag-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .presets button small { display: block; font-size: 0.75em; opacity: 0.9; font-weight: normal; }
+  .ag-presets button.hag { background: #c0392b; }
+  .ag-presets button.nag { background: #2980b9; }
+  .info { font-size: 0.88em; color: #7f8c8d; margin-top: 12px; }
+
+  /* Anion Gap bars */
+  .ag-section h2 { margin-top: 0; text-align: center; }
+  .bars {
+    margin: 20px 0;
+    font-size: 0.9em;
+  }
+  .bar-row {
+    display: flex;
+    height: 48px;
+    margin-bottom: 8px;
+    border: 2px solid #2c3e50;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 4px;
+  }
+  .seg-na { background: var(--na); }
+  .seg-uc { background: var(--uc); color: white; }
+  .seg-cl { background: var(--cl); }
+  .seg-hco3 { background: var(--hco3); }
+  .seg-ua { background: var(--ua); color: white; }
+  .label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #7f8c8d;
+    margin-bottom: 4px;
+  }
+  .ag-info {
+    text-align: center;
+    font-size: 1.15em;
+    margin: 12px 0;
+  }
+  .ag-info strong { color: #e67e22; }
+  footer { text-align: center; color: #95a5a6; margin-top: 30px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Henderson-Hasselbalch + Anion Gap 시각화</h1>
+  <p class="subtitle">산-염기 평형과 고음이온차/정상음이온차 대사성 산증을 슬라이더로 확인하세요</p>
+
+  <!-- HH Section -->
+  <div class="card">
+    <div class="equation">
+      pH = 6.1 + log<sub>10</sub>( [HCO<sub>3</sub><sup>-</sup>] / (0.0307 × pCO<sub>2</sub>) )
+    </div>
+
+    <div class="mode-select">
+      <label><input type="radio" name="mode" value="ph" checked><span>pH 계산</span></label>
+      <label><input type="radio" name="mode" value="hco3"><span>HCO<sub>3</sub> 계산</span></label>
+      <label><input type="radio" name="mode" value="pco2"><span>pCO<sub>2</sub> 계산</span></label>
+    </div>
+
+    <div class="controls">
+      <div class="slider-group">
+        <label><span>pH</span> <span class="value-display" id="phValue">7.40</span></label>
+        <input type="range" id="phSlider" min="6.80" max="7.80" step="0.01" value="7.40">
+      </div>
+      <div class="slider-group">
+        <label><span>HCO<sub>3</sub><sup>-</sup> <small>(mmol/L)</small></span> <span class="value-display" id="hco3Value">24.0</span></label>
+        <input type="range" id="hco3Slider" min="5" max="40" step="0.1" value="24">
+      </div>
+      <div class="slider-group">
+        <label><span>pCO<sub>2</sub> <small>(mmHg)</small></span> <span class="value-display" id="pco2Value">40.0</span></label>
+        <input type="range" id="pco2Slider" min="10" max="200" step="0.5" value="40">
+      </div>
+    </div>
+
+    <div class="status normal" id="status">정상 범위 (Normal)</div>
+    <div class="presets">
+      <button data-preset="normal">정상</button>
+    </div>
+
+    <div class="preset-category">
+      <h4 style="margin:16px 0 8px; text-align:center; color:#2c3e50;">대사성 산증</h4>
+      <div class="presets">
+        <button data-preset="met-acid-uncomp">비보상</button>
+        <button data-preset="met-acid-comp">호흡성 보상<br><small>PaCO₂ = 1.5×HCO₃ + 8</small></button>
+      </div>
+    </div>
+
+    <div class="preset-category">
+      <h4 style="margin:16px 0 8px; text-align:center; color:#2c3e50;">대사성 알칼리증</h4>
+      <div class="presets">
+        <button data-preset="met-alk-uncomp">비보상</button>
+        <button data-preset="met-alk-comp">호흡성 보상<br><small>PaCO₂ = 0.7×HCO₃ + 21</small></button>
+      </div>
+    </div>
+
+    <div class="preset-category">
+      <h4 style="margin:16px 0 8px; text-align:center; color:#2c3e50;">호흡성 산증</h4>
+      <div class="presets">
+        <button data-preset="resp-acid-uncomp">비보상</button>
+        <button data-preset="resp-acid-acute">급성 대사성 보상<br><small>+1 HCO₃ / +10 mmHg</small></button>
+        <button data-preset="resp-acid-chronic">만성 대사성 보상<br><small>+3.5 HCO₃ / +10 mmHg</small></button>
+      </div>
+    </div>
+
+    <div class="preset-category">
+      <h4 style="margin:16px 0 8px; text-align:center; color:#2c3e50;">호흡성 알칼리증</h4>
+      <div class="presets">
+        <button data-preset="resp-alk-uncomp">비보상</button>
+        <button data-preset="resp-alk-acute">급성 대사성 보상<br><small>−2 HCO₃ / −10 mmHg</small></button>
+        <button data-preset="resp-alk-chronic">만성 대사성 보상<br><small>−4.5 HCO₃ / −10 mmHg</small></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anion Gap Section -->
+  <div class="card ag-section">
+    <h2>측정/미측정 이온 & Anion Gap</h2>
+    <p style="text-align:center; color:#7f8c8d; font-size:0.9em;">
+      위쪽 = 양이온 · 아래쪽 = 음이온 (전기중성 유지)
+    </p>
+
+    <div class="controls" style="margin-bottom:16px;">
+      <div class="slider-group">
+        <label><span>Na<sup>+</sup> <small>(mEq/L)</small></span> <span class="value-display" id="naValue">140</span></label>
+        <input type="range" id="naSlider" min="130" max="150" step="1" value="140">
+      </div>
+      <div class="slider-group">
+        <label><span>Cl<sup>-</sup> <small>(mEq/L)</small></span> <span class="value-display" id="clValue">105</span></label>
+        <input type="range" id="clSlider" min="90" max="120" step="1" value="105">
+      </div>
+      <div class="slider-group">
+        <label><span>HCO<sub>3</sub><sup>-</sup> <small>(mEq/L)</small></span> <span class="value-display" id="agHco3Value">24.0</span></label>
+        <input type="range" id="agHco3Slider" min="5" max="40" step="0.1" value="24">
+      </div>
+    </div>
+
+    <div class="label-row">
+      <span>Measured Cation (MC)</span>
+      <span>Unmeasured Cation (UC)</span>
+    </div>
+    <div class="bar-row" id="cationBar">
+      <div class="bar-seg seg-na" id="segNa">Na 140</div>
+      <div class="bar-seg seg-uc" id="segUC">UC</div>
+    </div>
+
+    <div class="label-row" style="margin-top:14px;">
+      <span>Measured Anion (MA)</span>
+      <span>Unmeasured Anion (UA)</span>
+    </div>
+    <div class="bar-row" id="anionBar">
+      <div class="bar-seg seg-cl" id="segCl">Cl 105</div>
+      <div class="bar-seg seg-hco3" id="segHco3">HCO3 24</div>
+      <div class="bar-seg seg-ua" id="segUA">UA</div>
+    </div>
+
+    <div class="ag-info">
+      Anion Gap = Na − (Cl + HCO<sub>3</sub>) = <strong id="agValue">11</strong> mEq/L
+      <span id="agType" style="font-size:0.9em; margin-left:10px;"></span>
+    </div>
+
+    <div class="ag-presets">
+      <button class="hag" data-ag="hagma">고음이온차 대사성 산증 (HAGMA)</button>
+      <button class="nag" data-ag="nagma">정상음이온차 대사성 산증 (NAGMA)</button>
+      <button data-ag="normal">정상</button>
+    </div>
+
+    <div class="info">
+      • <strong>고음이온차 (HAGMA)</strong>: HCO₃ 감소 → UA 증가 (젓산, 케톤 등) · Cl 거의 불변 · AG 상승<br>
+      • <strong>정상음이온차 (NAGMA)</strong>: HCO₃ 감소 → Cl 증가 (고염소성) · UA 거의 불변 · AG 정상 유지<br>
+      • UC는 대략 고정(~10–15)으로 두고, 총 양이온 = 총 음이온이 되도록 UA를 계산합니다.
+    </div>
+  </div>
+</div>
+
+<footer>
+  Henderson-Hasselbalch + Anion Gap Interactive Visualizer · 용해도 계수 = 0.0307
+</footer>
+
+<script>
+const pKa = 6.1;
+const solubility = 0.0307;
+
+const phSlider = document.getElementById('phSlider');
+const hco3Slider = document.getElementById('hco3Slider');
+const pco2Slider = document.getElementById('pco2Slider');
+const phValue = document.getElementById('phValue');
+const hco3Value = document.getElementById('hco3Value');
+const pco2Value = document.getElementById('pco2Value');
+const statusEl = document.getElementById('status');
+const modeRadios = document.querySelectorAll('input[name="mode"]');
+
+const naSlider = document.getElementById('naSlider');
+const clSlider = document.getElementById('clSlider');
+const agHco3Slider = document.getElementById('agHco3Slider');
+const naValue = document.getElementById('naValue');
+const clValue = document.getElementById('clValue');
+const agHco3Value = document.getElementById('agHco3Value');
+const agValue = document.getElementById('agValue');
+const agType = document.getElementById('agType');
+
+const segNa = document.getElementById('segNa');
+const segUC = document.getElementById('segUC');
+const segCl = document.getElementById('segCl');
+const segHco3 = document.getElementById('segHco3');
+const segUA = document.getElementById('segUA');
+
+let currentMode = 'ph';
+
+function getMode() {
+  return document.querySelector('input[name="mode"]:checked').value;
+}
+
+function updateHH() {
+  currentMode = getMode();
+  let ph = parseFloat(phSlider.value);
+  let hco3 = parseFloat(hco3Slider.value);
+  let pco2 = parseFloat(pco2Slider.value);
+
+  if (currentMode === 'ph') {
+    if (hco3 > 0 && pco2 > 0) {
+      ph = pKa + Math.log10(hco3 / (solubility * pco2));
+      ph = Math.max(6.8, Math.min(7.8, ph));
+      phSlider.value = ph.toFixed(2);
+    }
+  } else if (currentMode === 'hco3') {
+    if (pco2 > 0) {
+      hco3 = solubility * pco2 * Math.pow(10, ph - pKa);
+      hco3 = Math.max(5, Math.min(40, hco3));
+      hco3Slider.value = hco3.toFixed(1);
+    }
+  } else if (currentMode === 'pco2') {
+    if (hco3 > 0) {
+      const denom = solubility * Math.pow(10, ph - pKa);
+      if (denom > 0) {
+        pco2 = hco3 / denom;
+        pco2 = Math.max(10, Math.min(200, pco2));
+        pco2Slider.value = pco2.toFixed(1);
+      }
+    }
+  }
+
+  const phNum = parseFloat(phSlider.value);
+  const hco3Num = parseFloat(hco3Slider.value);
+  const pco2Num = parseFloat(pco2Slider.value);
+
+  phValue.textContent = phNum.toFixed(2);
+  hco3Value.textContent = hco3Num.toFixed(1);
+  pco2Value.textContent = pco2Num.toFixed(1);
+
+  // Optional soft sync from HH to AG (only if AG slider is not being used)
+  if (document.activeElement !== agHco3Slider) {
+    agHco3Slider.value = hco3Num.toFixed(1);
+  }
+  agHco3Value.textContent = parseFloat(agHco3Slider.value).toFixed(1);
+
+  updateStatus(phNum, hco3Num, pco2Num);
+  updateAG();
+
+  phSlider.disabled = (currentMode === 'ph');
+  hco3Slider.disabled = (currentMode === 'hco3');
+  pco2Slider.disabled = (currentMode === 'pco2');
+}
+
+function updateStatus(ph, hco3, pco2) {
+  let text = '';
+  let cls = 'normal';
+  if (ph < 7.35) {
+    cls = 'acidosis';
+    text = '산증 (Acidosis)';
+    if (pco2 > 45 && hco3 >= 22) text += ' · 호흡성';
+    else if (hco3 < 22 && pco2 <= 45) text += ' · 대사성';
+    else text += ' · 혼합 가능성';
+  } else if (ph > 7.45) {
+    cls = 'alkalosis';
+    text = '알칼리증 (Alkalosis)';
+    if (pco2 < 35 && hco3 <= 26) text += ' · 호흡성';
+    else if (hco3 > 26 && pco2 >= 35) text += ' · 대사성';
+    else text += ' · 혼합 가능성';
+  } else {
+    text = '정상 범위 (Normal)';
+  }
+  statusEl.textContent = text;
+  statusEl.className = 'status ' + cls;
+}
+
+function updateAG() {
+  const na = parseFloat(naSlider.value);
+  const cl = parseFloat(clSlider.value);
+  const hco3 = parseFloat(agHco3Slider.value);
+
+  naValue.textContent = na;
+  clValue.textContent = cl;
+  agHco3Value.textContent = hco3.toFixed(1);
+
+  const ag = na - (cl + hco3);
+  agValue.textContent = ag.toFixed(1);
+
+  let type = '';
+  if (hco3 < 22) {
+    if (ag > 16) type = '(고음이온차 대사성 산증 경향)';
+    else if (ag >= 8 && ag <= 16) type = '(정상음이온차 대사성 산증 경향)';
+    else type = '(대사성 산증)';
+  } else {
+    type = ag > 16 ? '(AG 상승)' : '(정상 AG)';
+  }
+  agType.textContent = type;
+
+  // Visualization: assume total cations ≈ Na + UC, UC fixed ~12 for demo
+  const uc = 12;
+  const totalCation = na + uc;
+  const ma = cl + hco3;
+  const ua = Math.max(0, totalCation - ma);
+
+  // Width percentages (based on totalCation)
+  const pNa = (na / totalCation) * 100;
+  const pUC = (uc / totalCation) * 100;
+  const pCl = (cl / totalCation) * 100;
+  const pHco3 = (hco3 / totalCation) * 100;
+  const pUA = (ua / totalCation) * 100;
+
+  segNa.style.width = pNa + '%';
+  segNa.textContent = `Na ${na}`;
+  segUC.style.width = pUC + '%';
+  segUC.textContent = `UC ${uc}`;
+
+  segCl.style.width = pCl + '%';
+  segCl.textContent = `Cl ${cl}`;
+  segHco3.style.width = pHco3 + '%';
+  segHco3.textContent = `HCO₃ ${hco3.toFixed(1)}`;
+  segUA.style.width = pUA + '%';
+  segUA.textContent = `UA ${ua.toFixed(1)}`;
+}
+
+// Events
+[phSlider, hco3Slider, pco2Slider].forEach(s => s.addEventListener('input', updateHH));
+modeRadios.forEach(r => r.addEventListener('change', updateHH));
+[naSlider, clSlider, agHco3Slider].forEach(s => s.addEventListener('input', updateAG));
+
+// HH Presets with compensation
+document.querySelectorAll('.presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = btn.dataset.preset;
+    document.querySelector('input[value="ph"]').checked = true;
+
+    if (p === 'normal') {
+      hco3Slider.value = 24;
+      pco2Slider.value = 40;
+    }
+    // Metabolic acidosis
+    else if (p === 'met-acid-uncomp') {
+      hco3Slider.value = 12;
+      pco2Slider.value = 40; // no compensation
+    }
+    else if (p === 'met-acid-comp') {
+      const hco3 = 12;
+      hco3Slider.value = hco3;
+      pco2Slider.value = (1.5 * hco3 + 8).toFixed(1); // Winter's formula
+    }
+    // Metabolic alkalosis
+    else if (p === 'met-alk-uncomp') {
+      hco3Slider.value = 36;
+      pco2Slider.value = 40;
+    }
+    else if (p === 'met-alk-comp') {
+      const hco3 = 36;
+      hco3Slider.value = hco3;
+      pco2Slider.value = (0.7 * hco3 + 21).toFixed(1);
+    }
+    // Respiratory acidosis
+    else if (p === 'resp-acid-uncomp') {
+      pco2Slider.value = 60;
+      hco3Slider.value = 24; // no compensation
+    }
+    else if (p === 'resp-acid-acute') {
+      const pco2 = 60;
+      pco2Slider.value = pco2;
+      const delta = (pco2 - 40) / 10;
+      hco3Slider.value = (24 + 1 * delta).toFixed(1);
+    }
+    else if (p === 'resp-acid-chronic') {
+      const pco2 = 60;
+      pco2Slider.value = pco2;
+      const delta = (pco2 - 40) / 10;
+      hco3Slider.value = (24 + 3.5 * delta).toFixed(1);
+    }
+    // Respiratory alkalosis
+    else if (p === 'resp-alk-uncomp') {
+      pco2Slider.value = 25;
+      hco3Slider.value = 24;
+    }
+    else if (p === 'resp-alk-acute') {
+      const pco2 = 25;
+      pco2Slider.value = pco2;
+      const delta = (40 - pco2) / 10;
+      hco3Slider.value = (24 - 2 * delta).toFixed(1);
+    }
+    else if (p === 'resp-alk-chronic') {
+      const pco2 = 25;
+      pco2Slider.value = pco2;
+      const delta = (40 - pco2) / 10;
+      hco3Slider.value = (24 - 4.5 * delta).toFixed(1);
+    }
+
+    updateHH();
+  });
+});
+
+// AG Presets
+document.querySelectorAll('.ag-presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = btn.dataset.ag;
+    if (t === 'normal') {
+      naSlider.value = 140;
+      clSlider.value = 105;
+      hco3Slider.value = 24;
+    } else if (t === 'hagma') {
+      // HAGMA: HCO3 ↓, Cl 유지, AG ↑
+      naSlider.value = 140;
+      clSlider.value = 105;
+      hco3Slider.value = 12;
+    } else if (t === 'nagma') {
+      // NAGMA: HCO3 ↓, Cl ↑ by same amount, AG 유지
+      naSlider.value = 140;
+      clSlider.value = 117; // 105 + 12
+      hco3Slider.value = 12;
+    }
+    document.querySelector('input[value="ph"]').checked = true;
+    updateHH();
+  });
+});
+
+updateHH();
+</script>
+</body>
+</html>
